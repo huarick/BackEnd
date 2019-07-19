@@ -1,0 +1,73 @@
+首先，我们先看模型如下：
+ public class Activity {
+        public int ActivityId { get; set; }
+        public string Scope { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string ActivityFromTime { get; set; }
+        public string ActivityToTime { get; set; }
+        public string Target { get; set; }
+        public string ShippingType { get; set; }
+        public string WhichProducts { get; set; }
+        public string AdLink { get; set; }
+        public string Remark { get; set; }
+        public  List<ActivityRule> ActivityRules {
+            get;
+            set;
+        }
+    }
+  public class ActivityRule
+   {
+       public int ActivityRuleId
+       {
+           get;
+           set;
+       }
+        public int FromQty { get; set; }
+        public int ToQty { get; set; }
+        public decimal Discount { get; set; }
+        public string ActivityId { get; set; }
+        public DateTime CreateDt { get; set; }
+        
+    }
+注意 Activity与ActivityRule是1对多关系，这也和订单及订单明细表一样。
+现在我们要在MVC模式下（通过微软生成的代码）再作修改，显示完成的Activity包括ActivityRules的明细
+Details的控制器如下：
+  // GET: Activities/Details/5
+        public async Task<ActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            Activity activity = await db.Activities.FindAsync(id);
+            //byrick
+            //通过activityId获得所有 规则
+            List<ActivityRule> activityRules = db.ActivityRules.Where((a => a.ActivityId == id.ToString())).ToList();
+            activity.ActivityRules = activityRules;
+            //byrick
+            if (activity == null)
+            {
+                return HttpNotFound();
+            }
+            return View(activity);
+        }
+
+View如下：
+ <dl class="dl-horizontal">
+        @foreach (ActivityRule activityRule in Model.ActivityRules) {
+            
+        <dt>
+            规则：@activityRule.ActivityRuleId
+        </dt>
+        <dd>
+            FromQty:@activityRule.FromQty:
+            ToQty:@activityRule.ToQty:
+            
+        </dd>
+        }
+    </dl>
+    
+    </div>
+
+至此，即可实现显示完成的实体类数据，如果是订单的话，也可以显示完整的订单明细条目。
